@@ -25,17 +25,6 @@ function moonAgeToPhase(age: number): number {
 }
 
 /**
- * 位相角から月齢を計算
- * Calculate moon age from phase angle
- */
-function phaseToMoonAge(phase: number): number {
-  const synodicMonth = 29.530588;
-  const normalized = phase % (Math.PI * 2);
-  if (normalized < 0) return (normalized + Math.PI * 2) / (Math.PI * 2) * synodicMonth;
-  return normalized / (Math.PI * 2) * synodicMonth;
-}
-
-/**
  * 月相可視化コンポーネント
  * Moon phase visualization component
  */
