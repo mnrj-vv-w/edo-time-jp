@@ -11,7 +11,6 @@
  */
 
 import React, { useState } from 'react';
-import { DisplayItem } from './DisplayItem';
 import { SOLAR_TERMS } from '../core/solar-terms';
 import { SEKKI_72_LIST, SEKKI_72_DESCRIPTIONS } from '../core/sekki-72';
 import type { EdoTimeData, Sekki72 } from '../core/types';
@@ -90,8 +89,6 @@ export function SolarTermTable({ data }: SolarTermTableProps) {
       sekkiList,
     };
   });
-  
-  const currentItem = tableData.find(item => item.isCurrent);
   
   return (
     <div>

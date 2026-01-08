@@ -11,8 +11,6 @@
 
 import { AppLayout } from './components/AppLayout';
 import { TimeDisplay } from './components/TimeDisplay';
-import { SolarLongitude } from './components/SolarLongitude';
-import { SolarTerm } from './components/SolarTerm';
 import { SolarTermTable } from './components/SolarTermTable';
 import { SolarLongitudeCircle } from './components/SolarLongitudeCircle';
 import { Sekki72 } from './components/Sekki72';

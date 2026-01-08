@@ -13,7 +13,6 @@
 
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { SOLAR_TERMS } from '../core/solar-terms';
-import { SEKKI_72_LIST } from '../core/sekki-72';
 import type { EdoTimeData } from '../core/types';
 import styles from './SolarLongitudeCircle.module.css';
 
