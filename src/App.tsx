@@ -36,8 +36,6 @@ function App() {
   return (
     <AppLayout>
       <TimeDisplay data={data} />
-      {/* <SolarLongitude data={data} /> */}
-      {/* <SolarTerm data={data} /> */}
       <SolarLongitudeCircle data={data} />
       <SolarTermTable data={data} />
       <Sekki72 data={data} />

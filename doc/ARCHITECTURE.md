@@ -10,9 +10,9 @@
 
 - **不定時法の表示**: 日の出・日の入りに基づく12刻（昼6刻・夜6刻）の時間表示
 - **二十四節気・七十二候**: 太陽黄経に基づく季節の区分表示
-- **旧暦表示**: 簡易モデルによる旧暦の月日と月齢の表示
+- **旧暦表示**: koyomi8.comデータ参照による旧暦の月日と月齢の表示
 - **六曜表示**: 民間暦注としての六曜の表示
-- **視覚化**: 円形の時計表示による不定時法の可視化
+- **視覚化**: 円形の時計表示による不定時法の可視化、太陽黄経の円形表示、月相の3D可視化
 
 ## アーキテクチャ概要
 
@@ -42,13 +42,15 @@ src/
 │   ├── AppLayout.tsx     # レイアウトコンポーネント
 │   ├── TimeDisplay.tsx   # 現在時刻表示
 │   ├── SolarLongitude.tsx # 太陽黄経表示
+│   ├── SolarLongitudeCircle.tsx # 太陽黄経円形可視化
 │   ├── SolarTerm.tsx     # 二十四節気表示
-│   ├── SolarTermTable.tsx # 二十四節気対応表
+│   ├── SolarTermTable.tsx # 二十四節気・七十二候対応表
 │   ├── Sekki72.tsx       # 七十二候表示
 │   ├── TimeSystem.tsx    # 不定時法表示
 │   ├── TemporalTimeCircle.tsx # 円形時計表示
 │   ├── Rokuyo.tsx        # 六曜表示
 │   ├── LunarCalendar.tsx # 旧暦・月齢表示
+│   ├── MoonPhaseVisualization.tsx # 月相3D可視化
 │   └── DisplayItem.tsx   # 汎用表示コンポーネント
 ├── core/                 # コアロジック（計算処理）
 │   ├── index.ts          # 統合関数（calculateEdoTime）
@@ -56,7 +58,8 @@ src/
 │   ├── time-system.ts    # 不定時法計算
 │   ├── solar-terms.ts    # 二十四節気判定
 │   ├── sekki-72.ts       # 七十二候判定
-│   ├── lunar-calendar.ts # 旧暦・月齢計算（簡易モデル）
+│   ├── lunar-calendar.ts # 旧暦・月齢計算（koyomi8.comデータ参照）
+│   ├── lunar-calendar-data.ts # 旧暦データローダー
 │   ├── rokuyo.ts         # 六曜計算
 │   └── astronomy/        # 天文計算
 │       ├── constants.ts  # 天文定数
@@ -69,7 +72,8 @@ src/
     ├── timeAngle.ts      # 時刻→角度変換
     ├── juniShin.ts       # 十二支データ
     ├── kanjiNumbers.ts   # 漢数字変換
-    └── timezone.ts       # タイムゾーン変換
+    ├── timezone.ts       # タイムゾーン変換
+    └── wafuMonthNames.ts # 和風月名データ
 ```
 
 ## データフロー
@@ -82,7 +86,8 @@ graph TD
     B -->|不定時法計算| E[getTemporalTime]
     B -->|節気判定| F[getSolarTerm]
     B -->|七十二候判定| G[getSekki72]
-    B -->|旧暦計算| H[getApproxLunarDate]
+    B -->|旧暦取得| H[getLunarDate]
+    B -->|月齢計算| H2[getMoonAge]
     B -->|六曜計算| I[getRokuyo]
     B -->|EdoTimeData返却| J[App Component]
     J -->|データ配布| K[各表示コンポーネント]
@@ -143,23 +148,25 @@ graph TD
 
 ### 5. 七十二候判定 (`core/sekki-72.ts`)
 
-太陽黄経を5度刻みで判定し、対応する七十二候を返します。
+太陽黄経から、まず二十四節気を判定し、その節気内での位置（0-15度）から対応する七十二候を判定します。
 
 **判定方法**:
-- 黄経を5度刻みで割る（360° ÷ 72 = 5°）
-- 各候は5度の範囲を持つ
+- まず、太陽黄経から二十四節気を判定
+- 節気内での位置を計算（0-15度の範囲）
+- 節気内の位置を5度刻みで判定（各節気は3候に分割、各候は5度の範囲）
+- 節気名からSEKKI_72配列の開始インデックスを取得し、候のインデックスを計算
 
 ### 6. 旧暦計算 (`core/lunar-calendar.ts`)
 
-**注意**: これは簡易計算モデルです。精密な旧暦計算ではありません。
+**データソース**: [新暦と旧暦変換](https://koyomi8.com/kyuureki.html)（koyomi8.com）のデータを参照しています。天保暦に準拠した計算結果を使用しています。
 
-朔望月（約29.5日）を基準に、基準日からの経過日数から旧暦の月日を計算します。
+`lunar-calendar-data.ts`でCSVデータを読み込み、日付をキーとして旧暦の月日と六曜を取得します。対応期間は2026-2028年です。
 
 ### 7. 六曜計算 (`core/rokuyo.ts`)
 
 **注意**: 六曜は自然暦ではなく、民間暦注です。
 
-基準日からの経過日数を6で割った余りから、六曜を判定します（6日周期）。
+koyomi8.comデータから旧暦データと一緒に取得します。旧暦データ（`lunar-calendar-data.ts`）に含まれています。
 
 ## コンポーネント設計
 
@@ -169,33 +176,36 @@ graph TD
 App
 └── AppLayout
     ├── TimeDisplay
-    ├── SolarLongitude
-    ├── SolarTerm
+    ├── SolarLongitudeCircle
     ├── SolarTermTable
     ├── Sekki72
     ├── TimeSystem
     │   └── TemporalTimeCircle
     ├── Rokuyo
     └── LunarCalendar
+        └── MoonPhaseVisualization
 ```
 
 ### 主要コンポーネント
 
 - **`AppLayout`**: 全体のレイアウトとヘッダー・フッターを提供
 - **`DisplayItem`**: ラベル・値・説明文を表示する汎用コンポーネント
-- **`TemporalTimeCircle`**: SVGを使用した円形の不定時法表示
+- **`TemporalTimeCircle`**: SVGを使用した円形の不定時法表示。十二支を刻セグメントの中央に配置
+- **`SolarLongitudeCircle`**: 太陽黄経を円形で可視化し、二十四節気と七十二候をラベリング
+- **`MoonPhaseVisualization`**: Three.jsを使用した月相の3D可視化
 - **各表示コンポーネント**: `EdoTimeData`から必要な情報を取り出して表示
 
 ## 型定義
 
 ### 主要な型
 
-- **`EdoTimeData`**: すべての計算結果をまとめる型
+- **`EdoTimeData`**: すべての計算結果をまとめる型（`moonAgeError`フィールドを含む）
 - **`TemporalTime`**: 不定時法の意味構造（period, koku, start, end）
 - **`Location`**: 位置情報（緯度、経度、タイムゾーン）
 - **`SolarTerm`**: 二十四節気の型（24種類）
 - **`Sekki72`**: 七十二候の型（72種類）
 - **`Rokuyo`**: 六曜の型（6種類）
+- **`MoonAgeResult`**: 月齢計算の結果（moonAge, error）
 
 詳細は `src/core/types.ts` を参照してください。
 
@@ -206,11 +216,12 @@ App
 
 ## 注意事項
 
-### 計算の簡易性
+### データソースと計算の精度
 
-- **旧暦計算**: 天文学的構造理解を目的とした簡易モデルです。精密な旧暦計算ではありません。
+- **旧暦計算**: [新暦と旧暦変換](https://koyomi8.com/kyuureki.html)（koyomi8.com）のデータを参照しています。天保暦に準拠した計算結果を使用しています。対応期間は2026-2028年です。
+- **六曜**: koyomi8.comデータから取得します。自然暦ではなく、民間暦注です。
+- **月齢計算**: 新月データベース（`newMoonDates.json`）を使用して計算します。データ範囲外の場合はエラーメッセージを返します。
 - **天文計算**: 簡易式を使用しており、±数分の誤差が許容されます。
-- **六曜**: 自然暦ではなく、民間暦注です。生活習慣の再現を目的とした簡易計算です。
 
 ### タイムゾーン処理
 
@@ -219,10 +230,10 @@ App
 
 ## 今後の拡張可能性
 
-- 位置情報の動的取得（Geolocation API）
+- 位置情報の動的取得（Geolocation API） - 実装済み
 - 複数タイムゾーン対応
 - より精密な天文計算への置き換え
-- 旧暦計算の高精度化
+- 旧暦データ範囲の拡張（2026-2028年以外）
 - テーマ切り替え機能
 - データエクスポート機能
 
