@@ -14,6 +14,7 @@ import { DisplayItem } from './DisplayItem';
 import { MoonPhaseVisualization } from './MoonPhaseVisualization';
 import type { EdoTimeData } from '../core/types';
 import { getWafuMonthName, WAFU_MONTH_NAMES } from '../utils/wafuMonthNames';
+import { getMoonPhaseName } from '../utils/moonPhaseNames';
 import styles from './LunarCalendar.module.css';
 
 /**
@@ -80,12 +81,37 @@ export function LunarCalendar({ data }: LunarCalendarProps) {
           </tbody>
         </table>
       </details>
-      <DisplayItem
-        label="月齢"
-        value={moonAgeError ? '計算不可' : moonAge.toFixed(1)}
-        unit="日"
-        description={moonAgeError || undefined}
-      />
+      <div className={styles.moonAgeContainer}>
+        <div className={styles.moonAgeLabel}>月齢</div>
+        <div className={styles.moonAgeRow}>
+          <div className={styles.moonAgeValue}>
+            {moonAgeError ? '計算不可' : moonAge.toFixed(1)}
+            <span className={styles.moonAgeUnit}> 日</span>
+            {!moonAgeError && (() => {
+              const phaseName = getMoonPhaseName(moonAge);
+              if (!phaseName) return null;
+              return (
+                <span className={styles.moonPhaseNameInline}>
+                  <span className={styles.moonPhaseNameKanji}>{phaseName.name}</span>
+                  <span className={styles.moonPhaseNameReading}>（{phaseName.reading}）</span>
+                </span>
+              );
+            })()}
+          </div>
+        </div>
+        {moonAgeError && (
+          <div className={styles.moonAgeError}>{moonAgeError}</div>
+        )}
+        {!moonAgeError && (() => {
+          const phaseName = getMoonPhaseName(moonAge);
+          if (!phaseName) return null;
+          return (
+            <div className={styles.moonPhaseDescription}>
+              {phaseName.description}
+            </div>
+          );
+        })()}
+      </div>
       <MoonPhaseVisualization moonAge={moonAge} error={moonAgeError} />
       {moonAgeError && (
         <div style={{ 

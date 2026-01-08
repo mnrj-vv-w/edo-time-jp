@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { getMoonPhaseName } from '../utils/moonPhaseNames';
 import styles from './MoonPhaseVisualization.module.css';
 
 interface MoonPhaseVisualizationProps {
@@ -24,19 +25,14 @@ function moonAgeToPhase(age: number): number {
 }
 
 /**
- * 位相角から月相名を取得
- * Get phase name from phase angle
+ * 位相角から月齢を計算
+ * Calculate moon age from phase angle
  */
-function getPhaseName(phase: number): string {
+function phaseToMoonAge(phase: number): number {
+  const synodicMonth = 29.530588;
   const normalized = phase % (Math.PI * 2);
-  if (normalized < 0.1 || normalized > Math.PI * 2 - 0.1) return '新月';
-  if (normalized < Math.PI / 2 - 0.1) return '三日月';
-  if (normalized < Math.PI / 2 + 0.1) return '上弦の月';
-  if (normalized < Math.PI - 0.1) return '十三夜';
-  if (normalized < Math.PI + 0.1) return '満月';
-  if (normalized < Math.PI * 1.5 - 0.1) return '十六夜';
-  if (normalized < Math.PI * 1.5 + 0.1) return '下弦の月';
-  return '有明の月';
+  if (normalized < 0) return (normalized + Math.PI * 2) / (Math.PI * 2) * synodicMonth;
+  return normalized / (Math.PI * 2) * synodicMonth;
 }
 
 /**
@@ -163,7 +159,7 @@ export function MoonPhaseVisualization({ moonAge, error }: MoonPhaseVisualizatio
   }
 
   const phase = moonAgeToPhase(sliderAge);
-  const phaseName = getPhaseName(phase);
+  const phaseNameData = getMoonPhaseName(sliderAge);
 
   return (
     <div className={styles.container}>
@@ -185,9 +181,17 @@ export function MoonPhaseVisualization({ moonAge, error }: MoonPhaseVisualizatio
           <div className={styles.phaseDisplay}>
             位相角: {(phase * 180 / Math.PI).toFixed(1)}°
           </div>
-          <div className={styles.phaseName}>
-            月相: {phaseName}
-          </div>
+          {phaseNameData && (
+            <div className={styles.phaseNameContainer}>
+              <div className={styles.phaseName}>
+                月相: <span className={styles.phaseNameKanji}>{phaseNameData.name}</span>
+                <span className={styles.phaseNameReading}>（{phaseNameData.reading}）</span>
+              </div>
+              <div className={styles.phaseDescription}>
+                {phaseNameData.description}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
