@@ -11,6 +11,7 @@
 
 import { useState } from 'react';
 import { DisplayItem } from './DisplayItem';
+import { MoonPhaseVisualization } from './MoonPhaseVisualization';
 import type { EdoTimeData } from '../core/types';
 import { getWafuMonthName, WAFU_MONTH_NAMES } from '../utils/wafuMonthNames';
 import styles from './LunarCalendar.module.css';
@@ -61,7 +62,7 @@ export function LunarCalendar({ data }: LunarCalendarProps) {
               <th className={styles.th}>旧暦の月</th>
               <th className={styles.th}>和風月名（漢字）</th>
               <th className={styles.th}>読み</th>
-              <th className={styles.th}>由来と解説</th>
+              <th className={styles.th}>由来と解説（参考：国立国会図書館「暦のページ」）</th>
             </tr>
           </thead>
           <tbody>
@@ -85,6 +86,7 @@ export function LunarCalendar({ data }: LunarCalendarProps) {
         unit="日"
         description={moonAgeError || undefined}
       />
+      <MoonPhaseVisualization moonAge={moonAge} error={moonAgeError} />
       {moonAgeError && (
         <div style={{ 
           color: '#d32f2f', 

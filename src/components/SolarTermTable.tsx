@@ -95,18 +95,18 @@ export function SolarTermTable({ data }: SolarTermTableProps) {
   
   return (
     <div>
-      <DisplayItem
+      {/* <DisplayItem
         label="太陽黄経と二十四節気の対応"
         value={`現在: ${data.solarLongitude.toFixed(2)}° → ${data.solarTerm}`}
         description={currentItem ? `範囲: ${currentItem.range}` : undefined}
-      />
+      /> */}
       <details 
         className={styles.details}
         open={isExpanded}
         onToggle={(e) => setIsExpanded((e.target as HTMLDetailsElement).open)}
       >
         <summary className={styles.summary}>
-          {isExpanded ? '対応表を閉じる' : '全対応表を表示'}
+          {isExpanded ? '対応表を閉じる' : '全節気表を表示'}
         </summary>
         <table className={styles.table}>
           <thead>

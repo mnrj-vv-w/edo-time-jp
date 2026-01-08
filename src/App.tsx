@@ -14,6 +14,7 @@ import { TimeDisplay } from './components/TimeDisplay';
 import { SolarLongitude } from './components/SolarLongitude';
 import { SolarTerm } from './components/SolarTerm';
 import { SolarTermTable } from './components/SolarTermTable';
+import { SolarLongitudeCircle } from './components/SolarLongitudeCircle';
 import { Sekki72 } from './components/Sekki72';
 import { TimeSystem } from './components/TimeSystem';
 import { Rokuyo } from './components/Rokuyo';
@@ -39,6 +40,7 @@ function App() {
       <TimeDisplay data={data} />
       {/* <SolarLongitude data={data} /> */}
       {/* <SolarTerm data={data} /> */}
+      <SolarLongitudeCircle data={data} />
       <SolarTermTable data={data} />
       <Sekki72 data={data} />
       <TimeSystem data={data} />

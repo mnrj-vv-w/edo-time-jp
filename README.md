@@ -1,4 +1,4 @@
-# 江戸時間
+# 江戸ごよみ 〜 現代と江戸の暦を重ねて 〜 
 
 Edo-inspired natural time system for Japan,
 based on lunisolar calendar, solar terms,

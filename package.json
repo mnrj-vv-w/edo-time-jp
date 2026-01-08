@@ -11,8 +11,10 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@types/three": "^0.182.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
@@ -28,5 +30,3 @@
     "vite-plugin-pwa": "^0.17.4"
   }
 }
-
-

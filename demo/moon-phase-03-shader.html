@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>月相表現デモ③：シェーダ計算方式（軽量）</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+    .canvas-container {
+      width: 300px;
+      height: 300px;
+      margin: 20px auto;
+      background: transparent;
+    }
+    .controls {
+      margin-top: 20px;
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input[type="range"] {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .value-display {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .phase-info {
+      margin-top: 15px;
+      padding: 10px;
+      background: #333;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>方式③：シェーダ計算方式（軽量）</h1>
+    <div class="canvas-container" id="canvas-container"></div>
+    <div class="controls">
+      <label>
+        月齢: <span id="age-value">14.77</span> 日
+      </label>
+      <input type="range" id="age-slider" min="0" max="29.530588" step="0.01" value="14.77">
+      <div class="value-display" id="phase-display"></div>
+      <div class="phase-info" id="phase-info"></div>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+
+    // 月齢から位相角への変換関数
+    function moonAgeToPhase(age) {
+      const synodicMonth = 29.530588;
+      return (age / synodicMonth) * Math.PI * 2;
+    }
+
+    // 位相角から月相名を取得
+    function getPhaseName(phase) {
+      const normalized = phase % (Math.PI * 2);
+      if (normalized < 0.1 || normalized > Math.PI * 2 - 0.1) return '新月';
+      if (normalized < Math.PI / 2 - 0.1) return '三日月';
+      if (normalized < Math.PI / 2 + 0.1) return '上弦の月';
+      if (normalized < Math.PI - 0.1) return '十三夜';
+      if (normalized < Math.PI + 0.1) return '満月';
+      if (normalized < Math.PI * 1.5 - 0.1) return '十六夜';
+      if (normalized < Math.PI * 1.5 + 0.1) return '下弦の月';
+      return '有明の月';
+    }
+
+    // シェーダーコード
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      uniform float uPhase; // 位相角（0〜2π）
+      varying vec2 vUv;
+      
+      void main() {
+        // UV座標を中心を原点とした座標系に変換（-1〜1）
+        vec2 center = vUv - 0.5;
+        center.x *= 1.0; // アスペクト比調整（正方形なので1.0）
+        
+        // 中心からの距離
+        float dist = length(center);
+        
+        // 円の外側は破棄
+        if (dist > 0.5) {
+          discard;
+        }
+        
+        // 月相の計算（内積ベース）
+        // 位相角0（新月）: 太陽が月の後ろ → 完全に暗い
+        // 位相角π（満月）: 太陽が月の前 → 完全に明るい
+        // 位相角π/2（上弦）: 太陽が右側 → 右半分が明るい
+        // 位相角3π/2（下弦）: 太陽が左側 → 左半分が明るい
+        
+        // 月面上の点の位置（正規化前）
+        vec2 point = center * 2.0; // -1〜1の範囲
+        
+        // 月面上の点の法線ベクトル（外側方向、2Dで近似）
+        // 円盤なので、中心から外側への方向が法線
+        vec2 normal = normalize(point);
+        
+        // 太陽の方向ベクトル（位相角から計算）
+        // 位相角0: 太陽が右側（1, 0）
+        // 位相角π/2: 太陽が上側（0, 1）
+        // 位相角π: 太陽が左側（-1, 0）
+        // 位相角3π/2: 太陽が下側（0, -1）
+        vec2 sunDirection = vec2(cos(uPhase), sin(uPhase));
+        
+        // 法線と太陽方向の内積で光っているかどうかを判定
+        // 内積 > 0: 光っている、内積 < 0: 暗い
+        float dotProduct = dot(normal, sunDirection);
+        
+        // 明るさを計算（0〜1）
+        // 内積を-1〜1から0〜1にマッピング
+        float brightness = clamp(dotProduct * 0.5 + 0.5, 0.0, 1.0);
+        
+        // 境界を滑らかにする（オプション：より自然な見た目のため）
+        brightness = smoothstep(0.0, 0.1, brightness);
+        
+        // 月の色（白っぽい）
+        vec3 moonColor = vec3(0.95, 0.95, 0.9);
+        
+        // 暗部の色（少し青みがかった暗い色）
+        vec3 darkColor = vec3(0.1, 0.1, 0.15);
+        
+        // 光っている部分と暗い部分を混ぜる
+        vec3 finalColor = mix(darkColor, moonColor, brightness);
+        
+        // 距離に基づいて少し影を付ける（立体感）
+        float rimLight = 1.0 - dist * 1.5;
+        rimLight = clamp(rimLight, 0.0, 1.0);
+        finalColor *= (0.7 + rimLight * 0.3);
+        
+        gl_FragColor = vec4(finalColor, 1.0);
+      }
+    `;
+
+    // シーン、カメラ、レンダラーの初期化
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = null; // 透過背景
+
+    // OrthographicCamera（正投影）で真正面から見た円盤表現
+    const size = 2;
+    const camera = new THREE.OrthographicCamera(
+      -size, size,
+      size, -size,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      alpha: true
+    });
+    renderer.setSize(300, 300);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    // 平面ジオメトリ（正方形1枚）
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    
+    // シェーダーマテリアル
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uPhase: { value: moonAgeToPhase(14.77) } // 初期値
+      },
+      transparent: true
+    });
+
+    const moon = new THREE.Mesh(geometry, material);
+    scene.add(moon);
+
+    // 月齢スライダーのイベント
+    const ageSlider = document.getElementById('age-slider');
+    const ageValue = document.getElementById('age-value');
+    const phaseDisplay = document.getElementById('phase-display');
+    const phaseInfo = document.getElementById('phase-info');
+
+    function updateMoonPhase(age) {
+      // 月齢を位相角に変換
+      const phase = moonAgeToPhase(age);
+
+      // シェーダーのuniformを更新
+      material.uniforms.uPhase.value = phase;
+
+      // レンダリング
+      renderer.render(scene, camera);
+
+      // UI更新
+      const phaseName = getPhaseName(phase);
+      phaseDisplay.textContent = `位相角: ${(phase * 180 / Math.PI).toFixed(1)}°`;
+      phaseInfo.textContent = `月相: ${phaseName} (月齢 ${age.toFixed(2)} 日)`;
+    }
+
+    ageSlider.addEventListener('input', (e) => {
+      const age = parseFloat(e.target.value);
+      ageValue.textContent = age.toFixed(2);
+      updateMoonPhase(age);
+    });
+
+    // 初期レンダリング
+    updateMoonPhase(parseFloat(ageSlider.value));
+  </script>
+</body>
+</html>
+

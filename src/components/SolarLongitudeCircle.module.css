@@ -2,6 +2,9 @@
   text-align: center;
   margin: 2rem 0;
   padding: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .title {
@@ -11,52 +14,53 @@
   color: #1a1a1a;
 }
 
-.currentKokuInfo {
-  margin-bottom: 1rem;
-}
-
 .circleWrapper {
   display: flex;
   justify-content: center;
   margin-bottom: 1rem;
+  width: 100%;
+  overflow: hidden;
 }
 
 .svg {
   max-width: 100%;
   height: auto;
+  display: block;
+}
+
+.label {
+  pointer-events: none;
+  user-select: none;
 }
 
 .info {
   margin-top: 1rem;
 }
 
-.currentPeriod {
+.currentPosition {
   font-size: 1.25rem;
   font-weight: 500;
   margin: 0.5rem 0;
   color: #1a1a1a;
 }
 
-.periodText {
-  color: #2196f3;
+.value {
+  color: #ff5722;
   font-weight: 600;
-}
-
-.timeRange {
-  font-size: 0.875rem;
-  color: #666;
-  margin: 0.25rem 0;
 }
 
 @media (max-width: 768px) {
   .container {
     margin: 1rem 0;
+    padding: 0.5rem;
   }
   
-  .svg {
-    width: 250px;
-    height: 250px;
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  .currentPosition {
+    font-size: 1rem;
   }
 }
-
 

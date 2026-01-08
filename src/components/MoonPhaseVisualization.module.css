@@ -1,0 +1,58 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.canvas {
+  width: 300px;
+  height: 300px;
+  background: transparent;
+}
+
+.controls {
+  margin-top: 1rem;
+  padding: 1rem;
+  width: 100%;
+  max-width: 400px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.value {
+  font-weight: bold;
+  color: #2196f3;
+}
+
+.slider {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.phaseInfo {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #fff;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.phaseDisplay {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  color: #666;
+}
+
+.phaseName {
+  color: #333;
+}
+

@@ -12,7 +12,7 @@
  */
 
 import { useMemo } from 'react';
-import { formatTimeApprox } from '../utils/format';
+import { formatTimeApprox, formatTimeRange } from '../utils/format';
 import { timeToAngle, calculateAkeKureAngles } from '../utils/timeAngle';
 import { isDayJuniShin, getJuniShinFromKoku } from '../utils/juniShin';
 import { kokuToKanji } from '../utils/kanjiNumbers';
@@ -181,6 +181,14 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>一刻（不定時法）</h2>
+      <div className={styles.currentKokuInfo}>
+        <p className={styles.currentPeriod}>
+          現在: <span className={styles.periodText}>{temporalTime.period === 'day' ? '昼' : '夜'}</span> {kokuToKanji(temporalTime.koku)}刻（{getJuniShinFromKoku(temporalTime.period, temporalTime.koku)}の刻）
+        </p>
+        <p className={styles.timeRange}>
+          {formatTimeRange(temporalTime.start, temporalTime.end)}
+        </p>
+      </div>
       <div className={styles.circleWrapper}>
         <svg width="400" height="400" viewBox="0 0 400 400" className={styles.svg}>
           {/* 背景円 */}
