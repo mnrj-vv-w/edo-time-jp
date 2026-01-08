@@ -1,0 +1,58 @@
+.container {
+  text-align: center;
+  margin: 2rem 0;
+  padding: 1rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.circleWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.info {
+  margin-top: 1rem;
+}
+
+.currentPeriod {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+  color: #1a1a1a;
+}
+
+.periodText {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.timeRange {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0.25rem 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    margin: 1rem 0;
+  }
+  
+  .svg {
+    width: 250px;
+    height: 250px;
+  }
+}
+
+
