@@ -9,6 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['images/pwa-192x192.png', 'images/pwa-512x512.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
@@ -46,17 +47,18 @@ export default defineConfig({
         name: '江戸ごよみ｜現代と江戸の暦を重ねて',
         short_name: '江戸時間',
         description: '現代と江戸の暦を重ねて',
+        lang: 'ja',
         theme_color: '#1a1a1a',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/edo-time-jp/images/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/edo-time-jp/images/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           }

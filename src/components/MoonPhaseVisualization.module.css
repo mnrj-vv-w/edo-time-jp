@@ -29,13 +29,50 @@
 
 .value {
   font-weight: bold;
-  color: #2196f3;
+  color: #1a1a1a;
 }
 
 .slider {
   width: 100%;
   margin-bottom: 0.5rem;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #666;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #666;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.slider::-webkit-slider-track {
+  background: #e0e0e0;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.slider::-moz-range-track {
+  background: #e0e0e0;
+  height: 6px;
+  border-radius: 3px;
 }
 
 .phaseInfo {

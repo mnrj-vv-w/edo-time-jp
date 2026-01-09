@@ -176,9 +176,6 @@ export function MoonPhaseVisualization({ moonAge, error }: MoonPhaseVisualizatio
                 月相: <span className={styles.phaseNameKanji}>{phaseNameData.name}</span>
                 <span className={styles.phaseNameReading}>（{phaseNameData.reading}）</span>
               </div>
-              <div className={styles.phaseDescription}>
-                {phaseNameData.description}
-              </div>
             </div>
           )}
         </div>

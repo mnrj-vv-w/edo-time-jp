@@ -99,9 +99,8 @@
   align-items: baseline;
   gap: 0.5rem;
   padding: 0.25rem 0.75rem;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   border-radius: 4px;
-  border-left: 3px solid #4a90e2;
   font-size: 1rem;
 }
 
@@ -121,8 +120,7 @@
   line-height: 1.6;
   margin-top: 0.5rem;
   padding: 0.75rem;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   border-radius: 4px;
-  border-left: 3px solid #4a90e2;
 }
 
