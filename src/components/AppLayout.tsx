@@ -48,6 +48,16 @@ export function AppLayout({ children }: AppLayoutProps) {
         <p className={styles.footerText}>
           六曜は自然暦ではなく民間暦注です。
         </p>
+        <p className={styles.footerText}>
+          <a
+            href="https://github.com/sponsors/mnrj-vv-w"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.sponsorLink}
+          >
+            ☕ コーヒー代を投げ銭
+          </a>
+        </p>
       </footer>
     </div>
   );

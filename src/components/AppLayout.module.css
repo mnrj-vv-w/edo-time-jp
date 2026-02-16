@@ -52,6 +52,16 @@
   line-height: 1.5;
 }
 
+.sponsorLink {
+  color: #5a4a3a;
+  text-decoration: none;
+}
+
+.sponsorLink:hover {
+  color: #3d3028;
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: 1.5rem;
