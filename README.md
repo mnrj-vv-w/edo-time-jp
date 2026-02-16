@@ -114,10 +114,17 @@ https://koyomi8.com/databox.html#moonface
 誤差や解釈の違いが含まれる可能性があることを、  
 あらかじめご了承ください。
 
+## スマホPWA
+
+本アプリはPWAとしてインストール可能です。
+スマートフォンではホーム画面からアプリのように利用できます。
+
 ### アナリティクスについて
 
 本アプリでは、プライバシー重視のWebアナリティクスツール「[GoatCounter](https://www.goatcounter.com/)」を使用しています。  
 個人を特定する情報は収集せず、ページビュー数のみを記録します。
+
+Analytics: Google Analytics 4, GoatCounter
 
 ### 旧暦・六曜データについて
 
