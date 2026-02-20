@@ -142,5 +142,13 @@ export interface EdoTimeData {
   sunrise: Date;
   /** 日の入り / Sunset */
   sunset: Date;
+
+  /**
+   * 円盤用正午（不定時法の円形表示で角度の基準にする正午）
+   * Noon for circle (reference noon for temporal time circle angle calculation)
+   * 日出・日落と同じ暦日でコアが算出する。円盤はこれを使い地点・タイムゾーンが変わっても一貫する。
+   * Computed by core on the same calendar day as sunrise/sunset so the circle stays consistent when location/TZ changes.
+   */
+  noonForCircle: Date;
 }
 

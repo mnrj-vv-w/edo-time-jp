@@ -13,10 +13,11 @@
 
 import { useMemo } from 'react';
 import { formatTimeApprox, formatTimeRange } from '../utils/format';
-import { timeToAngle, calculateAkeKureAngles } from '../utils/timeAngle';
+import { calculateAkeKureAngles } from '../utils/timeAngle';
 import { isDayJuniShin, getJuniShinFromKoku } from '../utils/juniShin';
 import { kokuToKanji } from '../utils/kanjiNumbers';
 import type { EdoTimeData } from '../core/types';
+import { log } from '../utils/debugLog';
 import styles from './TemporalTimeCircle.module.css';
 
 /**
@@ -36,147 +37,139 @@ interface TemporalTimeCircleProps {
  * @returns 円形時計の表示要素 / Circular clock display element
  */
 export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
-  const { temporalTime, akeMutsu, kureMutsu, currentTime, sunrise, sunset } = data;
-  
-  /** 円形時計の描画データを計算（メモ化） / Calculate circular clock drawing data (memoized) */
-  const circleData = useMemo(() => {
-    /** 円の半径（ピクセル）/ Circle radius (pixels) */
+  const { temporalTime, akeMutsu, kureMutsu, currentTime, sunrise, sunset, noonForCircle } = data;
+
+  // セグメントのレイアウト（昼・夜の扇形の角度）は日出・日落の「時刻」が変わるときだけ再計算する
+  // 正午はコアが返す noonForCircle を使い、地点・タイムゾーンが変わっても角度が一貫するようにする
+  const segmentLayout = useMemo(() => {
     const radius = 120;
-    /** 円の中心X座標（ピクセル）/ Circle center X coordinate (pixels) */
     const centerX = 200;
-    /** 円の中心Y座標（ピクセル）/ Circle center Y coordinate (pixels) */
     const centerY = 200;
-    
-    // 正午（12時）を基準とする
-    // Use noon (12:00) as reference
-    const today = new Date(currentTime);
-    const noon = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
-    
-    // 明け六つ・暮れ六つの角度を計算
-    // Calculate angles for ake-mutsu and kure-mutsu
-    const { akeMutsuAngle, kureMutsuAngle } = calculateAkeKureAngles(sunrise, sunset, noon);
-    
-    // 昼の時間帯（明け六つから暮れ六つまで）
-    // Daytime period (from ake-mutsu to kure-mutsu)
-    const dayStart = akeMutsu.getTime();
-    const dayEnd = kureMutsu.getTime();
-    
-    // 現在時刻が昼か夜か
-    // Determine if current time is day or night
-    const nowTime = currentTime.getTime();
-    let normalizedNow = nowTime;
-    if (normalizedNow < dayStart) {
-      normalizedNow += 24 * 60 * 60 * 1000;
-    }
-    
-    /** 現在が昼かどうか / Whether current time is day */
-    const isDay = normalizedNow >= dayStart && normalizedNow < dayEnd;
-    
-    // 昼の6刻の角度を計算
-    // Calculate angles for 6 day koku
-    const daySegments = [];
-    for (let i = 0; i < 6; i++) {
-      const progress = i / 6;
-      const nextProgress = (i + 1) / 6;
-      
-      // 明け六つから暮れ六つまでの角度を6等分
-      // Divide the angle from ake-mutsu to kure-mutsu into 6 equal parts
-      let startAngle: number;
-      let endAngle: number;
-      
-      if (akeMutsuAngle < kureMutsuAngle) {
-        // 通常の場合（日の出が日の入りより前）
-        // Normal case (sunrise before sunset)
-        const angleRange = kureMutsuAngle - akeMutsuAngle;
-        startAngle = akeMutsuAngle + angleRange * progress;
-        endAngle = akeMutsuAngle + angleRange * nextProgress;
-      } else {
-        // 日の出が日の入りより後の場合（極地など）
-        // Case where sunrise is after sunset (polar regions, etc.)
-        const angleRange = (Math.PI * 2 + kureMutsuAngle) - akeMutsuAngle;
-        startAngle = akeMutsuAngle + angleRange * progress;
-        endAngle = akeMutsuAngle + angleRange * nextProgress;
-        if (endAngle > Math.PI * 2) endAngle -= Math.PI * 2;
-        if (startAngle > Math.PI * 2) startAngle -= Math.PI * 2;
-      }
-      
-      /** 現在の刻かどうか / Whether this is the current koku */
-      const isCurrent = isDay && temporalTime.period === 'day' && temporalTime.koku === (i + 1);
-      
-      daySegments.push({
-        startAngle,
-        endAngle,
-        isCurrent,
-        koku: (i + 1) as 1 | 2 | 3 | 4 | 5 | 6,
-      });
-    }
-    
-    // 夜の6刻の角度を計算
-    // Calculate angles for 6 night koku
-    const nightSegments = [];
-    
-    // 角度を0-2πの範囲に正規化
-    // Normalize angle to 0-2π range
+
+    const { akeMutsuAngle, kureMutsuAngle } = calculateAkeKureAngles(sunrise, sunset, noonForCircle);
+    log('TemporalTimeCircle:segmentLayout', {
+      sunrise: sunrise.getTime(),
+      sunriseISO: sunrise.toISOString(),
+      sunset: sunset.getTime(),
+      sunsetISO: sunset.toISOString(),
+      noonForCircle: noonForCircle.getTime(),
+      noonForCircleISO: noonForCircle.toISOString(),
+      akeMutsuAngleRad: akeMutsuAngle,
+      akeMutsuAngleDeg: (akeMutsuAngle * 180) / Math.PI,
+      kureMutsuAngleRad: kureMutsuAngle,
+      kureMutsuAngleDeg: (kureMutsuAngle * 180) / Math.PI,
+    });
+
     const normalizeAngle = (angle: number): number => {
-      let normalized = angle % (Math.PI * 2);
-      if (normalized < 0) normalized += Math.PI * 2;
-      return normalized;
+      let n = angle % (Math.PI * 2);
+      if (n < 0) n += Math.PI * 2;
+      return n;
     };
-    
-    /** 正規化された明け六つの角度 / Normalized ake-mutsu angle */
+
+    const daySegments: Array<{ startAngle: number; endAngle: number; koku: 1 | 2 | 3 | 4 | 5 | 6 }> = [];
+    if (akeMutsuAngle < kureMutsuAngle) {
+      const angleRange = kureMutsuAngle - akeMutsuAngle;
+      for (let i = 0; i < 6; i++) {
+        daySegments.push({
+          startAngle: akeMutsuAngle + angleRange * (i / 6),
+          endAngle: akeMutsuAngle + angleRange * ((i + 1) / 6),
+          koku: (i + 1) as 1 | 2 | 3 | 4 | 5 | 6,
+        });
+      }
+    } else {
+      let angleRange = Math.PI * 2 + kureMutsuAngle - akeMutsuAngle;
+      // 極夜に近いとき昼が 2π や 0 にならないようガード
+      angleRange = Math.max(0.01, Math.min(Math.PI * 2 - 0.01, angleRange));
+      for (let i = 0; i < 6; i++) {
+        let sa = akeMutsuAngle + angleRange * (i / 6);
+        let ea = akeMutsuAngle + angleRange * ((i + 1) / 6);
+        if (sa > Math.PI * 2) sa -= Math.PI * 2;
+        if (ea > Math.PI * 2) ea -= Math.PI * 2;
+        daySegments.push({ startAngle: sa, endAngle: ea, koku: (i + 1) as 1 | 2 | 3 | 4 | 5 | 6 });
+      }
+    }
+
     const akeMutsuNorm = normalizeAngle(akeMutsuAngle);
-    /** 正規化された暮れ六つの角度 / Normalized kure-mutsu angle */
     const kureMutsuNorm = normalizeAngle(kureMutsuAngle);
-    
-    // 暮れ六つから翌日の明け六つまでの角度範囲を計算
-    // Calculate angle range from kure-mutsu to next day's ake-mutsu
-    // Always assumes crossing 360 degrees, so adds 2π
-    const nightAngleRange = (Math.PI * 2 + akeMutsuNorm) - kureMutsuNorm;
-    
+    // 暮れ六つ→明け六つ（時計回り）の弧の長さ。kureMutsuNorm <= akeMutsuNorm のときは 2π を足さない
+    let nightAngleRange =
+      kureMutsuNorm > akeMutsuNorm
+        ? Math.PI * 2 + akeMutsuNorm - kureMutsuNorm
+        : akeMutsuNorm - kureMutsuNorm;
+    // 極地などで夜の弧が 0 にならないようガード
+    nightAngleRange = Math.max(0.01, nightAngleRange);
+
+    const nightSegments: Array<{
+      startAngle: number;
+      endAngle: number;
+      midAngle: number;
+      koku: 1 | 2 | 3 | 4 | 5 | 6;
+    }> = [];
     for (let i = 0; i < 6; i++) {
-      const progress = i / 6;
-      const nextProgress = (i + 1) / 6;
-      
-      // 生の角度（正規化前）を計算
-      const startRaw = kureMutsuNorm + nightAngleRange * progress;
-      const endRaw = kureMutsuNorm + nightAngleRange * nextProgress;
-      
-      // 表示用に正規化
-      const startAngle = normalizeAngle(startRaw);
-      const endAngle = normalizeAngle(endRaw);
-      
-      // テキスト・分割線用の中央角
-      // Central angle for text and dividing lines
-      const midAngle = normalizeAngle((startRaw + endRaw) / 2);
-      
-      /** 現在の刻かどうか / Whether this is the current koku */
-      const isCurrent = !isDay && temporalTime.period === 'night' && temporalTime.koku === (i + 1);
-      
+      const startRaw = kureMutsuNorm + nightAngleRange * (i / 6);
+      const endRaw = kureMutsuNorm + nightAngleRange * ((i + 1) / 6);
       nightSegments.push({
-        startAngle,
-        endAngle,
-        midAngle,
-        isCurrent,
+        startAngle: normalizeAngle(startRaw),
+        endAngle: normalizeAngle(endRaw),
+        midAngle: normalizeAngle((startRaw + endRaw) / 2),
         koku: (i + 1) as 1 | 2 | 3 | 4 | 5 | 6,
       });
     }
-    
-    // 現在時刻の角度
-    // Current time angle
-    const currentAngle = timeToAngle(currentTime, noon);
-    
+
     return {
       radius,
       centerX,
       centerY,
       daySegments,
       nightSegments,
-      currentAngle,
       akeMutsuAngle,
       kureMutsuAngle,
+      normalizeAngle,
+    };
+  }, [sunrise.getTime(), sunset.getTime(), noonForCircle.getTime()]);
+
+  /** 針の角度・現在刻のハイライトは currentTime のたびに更新 */
+  const circleData = useMemo(() => {
+    const { daySegments, nightSegments, normalizeAngle } = segmentLayout;
+    const dayStart = akeMutsu.getTime();
+    const dayEnd = kureMutsu.getTime();
+    let normalizedNow = currentTime.getTime();
+    if (normalizedNow < dayStart) normalizedNow += 24 * 60 * 60 * 1000;
+    const isDay = normalizedNow >= dayStart && normalizedNow < dayEnd;
+
+    const daySegmentsWithCurrent = daySegments.map((seg, i) => ({
+      ...seg,
+      isCurrent: isDay && temporalTime.period === 'day' && temporalTime.koku === i + 1,
+    }));
+    const nightSegmentsWithCurrent = nightSegments.map((seg, i) => ({
+      ...seg,
+      isCurrent: !isDay && temporalTime.period === 'night' && temporalTime.koku === i + 1,
+    }));
+
+    const seg =
+      temporalTime.period === 'day'
+        ? daySegmentsWithCurrent[temporalTime.koku - 1]
+        : nightSegmentsWithCurrent[temporalTime.koku - 1];
+    const segStartAngle = seg.startAngle;
+    const segEndAngle = seg.endAngle;
+    const segmentDuration = temporalTime.end.getTime() - temporalTime.start.getTime();
+    const elapsed = currentTime.getTime() - temporalTime.start.getTime();
+    const progress = Math.max(
+      0,
+      Math.min(1, segmentDuration > 0 ? elapsed / segmentDuration : 0)
+    );
+    let angleSpan = (segEndAngle - segStartAngle + Math.PI * 2) % (Math.PI * 2);
+    if (angleSpan < 0) angleSpan += Math.PI * 2;
+    const currentAngle = normalizeAngle(segStartAngle + progress * angleSpan);
+
+    return {
+      ...segmentLayout,
+      daySegments: daySegmentsWithCurrent,
+      nightSegments: nightSegmentsWithCurrent,
+      currentAngle,
       isDay,
     };
-  }, [temporalTime, akeMutsu, kureMutsu, currentTime, sunrise, sunset]);
+  }, [segmentLayout, temporalTime, akeMutsu, kureMutsu, currentTime]);
   
   return (
     <div className={styles.container}>
@@ -235,13 +228,13 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
                     opacity="0.6"
                   />
                 )}
-                {/* 刻の番号（漢数字） */}
+                {/* 刻の番号（漢数字）- 内側に配置して十二支と重ならないように */}
                 <text
-                  x={circleData.centerX + (circleData.radius * 0.6) * Math.cos((startAngle + endAngle) / 2)}
-                  y={circleData.centerY + (circleData.radius * 0.6) * Math.sin((startAngle + endAngle) / 2)}
+                  x={circleData.centerX + (circleData.radius * 0.48) * Math.cos((startAngle + endAngle) / 2)}
+                  y={circleData.centerY + (circleData.radius * 0.48) * Math.sin((startAngle + endAngle) / 2)}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="18"
+                  fontSize="16"
                   fontWeight="bold"
                   fill={seg.isCurrent ? '#333' : '#666'}
                 >
@@ -291,13 +284,13 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
                   strokeWidth="1"
                   opacity="0.5"
                 />
-                {/* 刻の番号（漢数字） */}
+                {/* 刻の番号（漢数字）- 内側に配置して十二支と重ならないように */}
                 <text
-                  x={circleData.centerX + (circleData.radius * 0.6) * Math.cos(seg.midAngle)}
-                  y={circleData.centerY + (circleData.radius * 0.6) * Math.sin(seg.midAngle)}
+                  x={circleData.centerX + (circleData.radius * 0.48) * Math.cos(seg.midAngle)}
+                  y={circleData.centerY + (circleData.radius * 0.48) * Math.sin(seg.midAngle)}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="18"
+                  fontSize="16"
                   fontWeight="bold"
                   fill={seg.isCurrent ? '#333' : '#999'}
                 >
@@ -307,7 +300,7 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
             );
           })}
           
-          {/* 十二支を表示 - 各刻セグメントの中央に配置 */}
+          {/* 十二支を表示 - 各刻セグメントの外側に配置（漢数字と離す） */}
           {circleData.daySegments.map((seg, i) => {
             // 刻セグメントの中央角を計算
             // Calculate central angle of koku segment
@@ -336,11 +329,11 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
             return (
               <g key={`day-juni-${i}`}>
                 <text
-                  x={circleData.centerX + (circleData.radius * 0.85) * Math.cos(midAngle)}
-                  y={circleData.centerY + (circleData.radius * 0.85) * Math.sin(midAngle)}
+                  x={circleData.centerX + (circleData.radius * 0.88) * Math.cos(midAngle)}
+                  y={circleData.centerY + (circleData.radius * 0.88) * Math.sin(midAngle)}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="14"
+                  fontSize="13"
                   fontWeight={isDay ? "bold" : "normal"}
                   fill={isDay ? "#ff9800" : "#666"}
                 >
@@ -361,11 +354,11 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
             return (
               <g key={`night-juni-${i}`}>
                 <text
-                  x={circleData.centerX + (circleData.radius * 0.85) * Math.cos(midAngle)}
-                  y={circleData.centerY + (circleData.radius * 0.85) * Math.sin(midAngle)}
+                  x={circleData.centerX + (circleData.radius * 0.88) * Math.cos(midAngle)}
+                  y={circleData.centerY + (circleData.radius * 0.88) * Math.sin(midAngle)}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="14"
+                  fontSize="13"
                   fontWeight={isDay ? "bold" : "normal"}
                   fill={isDay ? "#ff9800" : "#666"}
                 >

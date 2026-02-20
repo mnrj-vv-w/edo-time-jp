@@ -17,6 +17,7 @@ import { useState, useEffect } from 'react';
 import { calculateEdoTime } from '../core';
 import { DEFAULT_LOCATION } from '../core/astronomy/constants';
 import type { EdoTimeData, Location } from '../core/types';
+import { log } from '../utils/debugLog';
 
 /**
  * 江戸時間データを管理するフック
@@ -36,54 +37,78 @@ export function useEdoTime(location?: Location): EdoTimeData {
   const [loc, setLoc] = useState<Location>(location || DEFAULT_LOCATION);
   /** 江戸時間データの状態 / Edo time data state */
   const [data, setData] = useState<EdoTimeData>(() => calculateEdoTime(new Date(), loc));
-  
+
+  // デバッグ: 初回の loc をログ
+  useEffect(() => {
+    log('useEdoTime:loc', {
+      source: 'initial',
+      loc: { lat: loc.lat, lon: loc.lon, tz: loc.tz },
+    });
+  }, []);
+
   // ブラウザの現在地とタイムゾーンを取得（許可が得られない場合は東京にフォールバック）
   // Get browser's current location and timezone (fallback to Tokyo if permission not granted)
   useEffect(() => {
     if (location) {
+      log('useEdoTime:loc', {
+        source: 'prop',
+        loc: { lat: location.lat, lon: location.lon, tz: location.tz },
+      });
       setLoc(location);
       return;
     }
-    
+
     /**
      * 位置情報を取得する
      * Fetch location information
      */
     const fetchLocation = () => {
       if (!navigator?.geolocation) {
+        log('useEdoTime:loc', {
+          source: 'fallback',
+          reason: 'no_geolocation',
+          loc: { lat: DEFAULT_LOCATION.lat, lon: DEFAULT_LOCATION.lon, tz: DEFAULT_LOCATION.tz },
+        });
         setLoc(DEFAULT_LOCATION);
         return;
       }
-      
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
           const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          setLoc({ lat: latitude, lon: longitude, tz });
+          const newLoc = { lat: latitude, lon: longitude, tz };
+          log('useEdoTime:loc', { source: 'geolocation', loc: newLoc });
+          setLoc(newLoc);
         },
         () => {
+          log('useEdoTime:loc', {
+            source: 'fallback',
+            reason: 'geolocation_error',
+            loc: { lat: DEFAULT_LOCATION.lat, lon: DEFAULT_LOCATION.lon, tz: DEFAULT_LOCATION.tz },
+          });
           setLoc(DEFAULT_LOCATION);
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     };
-    
+
     fetchLocation();
   }, [location]);
-  
-  // 1分ごとにデータを更新
-  // Update data every 1 minute
+
+  // 1分ごとにデータを更新（初回は即時実行しない＝初回描画の data を上書きしない）
+  // Update data every 1 minute (do NOT run setData immediately on mount - avoids overwriting correct first paint)
   useEffect(() => {
-    // 初回計算
-    // Initial calculation
-    setData(calculateEdoTime(new Date(), loc));
-    
-    // 1分ごとに更新
-    // Update every 1 minute
     const interval = setInterval(() => {
-      setData(calculateEdoTime(new Date(), loc));
+      const now = new Date();
+      log('useEdoTime:interval', {
+        loc: { lat: loc.lat, lon: loc.lon, tz: loc.tz },
+        currentTime: now.toISOString(),
+        currentTimeMs: now.getTime(),
+      });
+      setData(calculateEdoTime(now, loc));
     }, 60 * 1000); // 1分 = 60秒 = 60000ミリ秒 / 1 minute = 60 seconds = 60000 milliseconds
-    
+
     return () => {
       clearInterval(interval);
     };

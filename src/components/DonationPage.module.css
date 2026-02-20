@@ -1,0 +1,91 @@
+.page {
+  min-height: 100vh;
+  background-color: #f5f0e6;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-family: 'Noto Serif JP', -apple-system, BlinkMacSystemFont, serif;
+}
+
+.content {
+  position: relative;
+  max-width: 480px;
+  width: 100%;
+  background: rgba(245, 240, 230, 0.92);
+  color: #2c1810;
+  padding: 2.5rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.backLink,
+.backLinkBottom {
+  display: inline-block;
+  color: #5a4a3a;
+  text-decoration: none;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.backLink:hover,
+.backLinkBottom:hover {
+  color: #3d3028;
+  text-decoration: underline;
+}
+
+.backLinkBottom {
+  margin-top: 2rem;
+  margin-bottom: 0;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0 0 0.75rem 0;
+  color: #2c1810;
+}
+
+.lead {
+  font-size: 0.9375rem;
+  color: #4a3c30;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+}
+
+.section {
+  margin-bottom: 1.75rem;
+}
+
+.sectionTitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #5a4a3a;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 0.05em;
+}
+
+.paypayInfo,
+.contactInfo {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  margin: 0;
+  color: #2c1810;
+}
+
+
+.paypayInfo strong {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+}

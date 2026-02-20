@@ -14,6 +14,8 @@
  */
 
 import type { Location } from '../types';
+import { getCalendarDateInTimeZone, getNoonInTimeZone } from '../../utils/timezone';
+import { log } from '../../utils/debugLog';
 import { getSolarLongitude } from './solarLongitude';
 
 /**
@@ -31,15 +33,10 @@ import { getSolarLongitude } from './solarLongitude';
  * @returns 日の出・日の入りの時刻（ローカルタイムゾーン）/ Sunrise and sunset times (local timezone)
  */
 export function getSunriseSunset(date: Date, location: Location): { sunrise: Date; sunset: Date } {
-  // その日の正午（ローカル時間）を基準とする
-  // Use that day's noon (local time) as reference
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-  
-  // 正午（ローカル時間）
-  // Noon (local time)
-  const noon = new Date(year, month, day, 12, 0, 0);
+  // その日の正午を「地点のタイムゾーン」での暦日で作成（現在地で統一）
+  // Use noon on that day in the location's timezone (unified with current location)
+  const { year, month, day } = getCalendarDateInTimeZone(date, location.tz);
+  const noon = getNoonInTimeZone(year, month, day, location.tz);
   
   // 太陽黄経を正確に計算（既存の関数を使用）
   // Calculate solar longitude accurately (using existing function)
@@ -82,7 +79,15 @@ export function getSunriseSunset(date: Date, location: Location): { sunrise: Dat
     
     const sunrise = new Date(noon.getTime() + sunriseOffset * 60 * 60 * 1000);
     const sunset = new Date(noon.getTime() + sunsetOffset * 60 * 60 * 1000);
-    
+    log('sunriseSunset:getSunriseSunset', {
+      dateMs: date.getTime(),
+      dateISO: date.toISOString(),
+      locationTz: location.tz,
+      sunrise: sunrise.getTime(),
+      sunriseISO: sunrise.toISOString(),
+      sunset: sunset.getTime(),
+      sunsetISO: sunset.toISOString(),
+    });
     return { sunrise, sunset };
   } else {
     // 極夜または白夜の場合
@@ -91,6 +96,16 @@ export function getSunriseSunset(date: Date, location: Location): { sunrise: Dat
     // Simplified handling: set sunrise/sunset to 6 hours before/after noon
     const sunrise = new Date(noon.getTime() - 6 * 60 * 60 * 1000);
     const sunset = new Date(noon.getTime() + 6 * 60 * 60 * 1000);
+    log('sunriseSunset:getSunriseSunset', {
+      dateMs: date.getTime(),
+      dateISO: date.toISOString(),
+      locationTz: location.tz,
+      sunrise: sunrise.getTime(),
+      sunriseISO: sunrise.toISOString(),
+      sunset: sunset.getTime(),
+      sunsetISO: sunset.toISOString(),
+      polarCase: true,
+    });
     return { sunrise, sunset };
   }
 }

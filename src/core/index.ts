@@ -19,7 +19,12 @@ import { getSekki72 } from './sekki-72';
 import { getTemporalTime, getAkeMutsu, getKureMutsu } from './time-system';
 import { getRokuyo } from './rokuyo';
 import { getLunarDate, getMoonAge } from './lunar-calendar';
-import { toTimeZone } from '../utils/timezone';
+import {
+  getCalendarDateInTimeZone,
+  getNoonInTimeZone,
+  toTimeZone,
+} from '../utils/timezone';
+import { log } from '../utils/debugLog';
 
 /**
  * 江戸時間の全データを計算する
@@ -71,7 +76,26 @@ export function calculateEdoTime(
   // Calculate ake-mutsu and kure-mutsu
   const akeMutsu = getAkeMutsu(sunrise);
   const kureMutsu = getKureMutsu(sunset);
-  
+
+  // 円盤用正午（地点のタイムゾーンでの暦日で 12:00。現在地で統一）
+  // Noon for circle (12:00 on calendar day in location TZ; unified with current location)
+  const calendarDate = getCalendarDateInTimeZone(baseDate, loc.tz);
+  const { year, month, day } = calendarDate;
+  const noonForCircle = getNoonInTimeZone(year, month, day, loc.tz);
+
+  log('core:calculateEdoTime', {
+    baseDate: baseDate.toISOString(),
+    baseDateMs: baseDate.getTime(),
+    loc: { lat: loc.lat, lon: loc.lon, tz: loc.tz },
+    sunrise: sunrise.getTime(),
+    sunriseISO: sunrise.toISOString(),
+    sunset: sunset.getTime(),
+    sunsetISO: sunset.toISOString(),
+    noonForCircle: noonForCircle.getTime(),
+    noonForCircleISO: noonForCircle.toISOString(),
+    calendarDate,
+  });
+
   // 六曜を取得（koyomi8.comデータ参照）
   // Get rokuyo (referencing koyomi8.com data)
   const rokuyo = getRokuyo(baseDate);
@@ -98,6 +122,7 @@ export function calculateEdoTime(
     moonAgeError: moonAgeResult.error,
     sunrise,
     sunset,
+    noonForCircle,
   };
 }
 
