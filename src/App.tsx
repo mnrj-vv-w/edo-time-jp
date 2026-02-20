@@ -9,7 +9,9 @@
  * to each component.
  */
 
+import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/AppLayout';
+import { DonationPage } from './components/DonationPage';
 import { TimeDisplay } from './components/TimeDisplay';
 import { SolarTermTable } from './components/SolarTermTable';
 import { SolarLongitudeCircle } from './components/SolarLongitudeCircle';
@@ -19,20 +21,9 @@ import { Rokuyo } from './components/Rokuyo';
 import { LunarCalendar } from './components/LunarCalendar';
 import { useEdoTime } from './hooks/useEdoTime';
 
-/**
- * メインアプリケーションコンポーネント
- * Main application component
- * 
- * useEdoTimeフックから江戸時間データを取得し、すべての表示コンポーネントに配布する。
- * 
- * Gets Edo time data from useEdoTime hook and distributes it to all display components.
- * 
- * @returns アプリケーションのルート要素 / Application root element
- */
-function App() {
-  /** 江戸時間データ / Edo time data */
+/** トップページ（江戸ごよみメイン表示） */
+function TopPage() {
   const data = useEdoTime();
-  
   return (
     <AppLayout>
       <TimeDisplay data={data} />
@@ -43,6 +34,16 @@ function App() {
       <Rokuyo data={data} />
       <LunarCalendar data={data} />
     </AppLayout>
+  );
+}
+
+/** メインアプリケーションコンポーネント */
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<TopPage />} />
+      <Route path="/donation" element={<DonationPage />} />
+    </Routes>
   );
 }
 

@@ -11,6 +11,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './styles/App.module.css';
 
@@ -18,7 +19,9 @@ import './styles/App.module.css';
 // Mount React application to root element
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter basename="/edo-time-jp/">
+      <App />
+    </BrowserRouter>
   </React.StrictMode>,
 );
 

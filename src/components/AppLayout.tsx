@@ -11,7 +11,9 @@
  * Uses an academic and calm design.
  */
 
+import { Link } from 'react-router-dom';
 import styles from './AppLayout.module.css';
+import { isDebug, downloadLogs } from '../utils/debugLog';
 
 /**
  * AppLayoutコンポーネントのプロパティ
@@ -42,22 +44,30 @@ export function AppLayout({ children }: AppLayoutProps) {
         {children}
       </main>
       <footer className={styles.footer}>
-        <p className={styles.footerText}>
-          本アプリの旧暦・六曜データはkoyomi8.com（新暦と旧暦変換）のデータを参照しています。
-        </p>
-        <p className={styles.footerText}>
-          六曜は自然暦ではなく民間暦注です。
-        </p>
-        <p className={styles.footerText}>
-          <a
-            href="https://github.com/sponsors/mnrj-vv-w"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.sponsorLink}
-          >
-            ☕ コーヒー代を投げ銭
-          </a>
-        </p>
+        <div className={styles.footerInner}>
+          {isDebug() && (
+            <p className={styles.footerText} style={{ textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => downloadLogs()}
+                className={styles.debugDownload}
+              >
+                ログをダウンロード
+              </button>
+            </p>
+          )}
+          <p className={styles.footerText}>
+            ・旧暦・六曜データはkoyomi8.com（新暦と旧暦変換）のデータを参照しています。
+          </p>
+          <p className={styles.footerText}>
+            ・本アプリでは、不定時法計算などに、ブラウザの位置情報（Geolocation）を要求します。位置情報のを取得できない場合は、東京をデフォルトとして計算します。個人を特定する情報は取得・保存しておりません。
+          </p>
+          <p className={styles.footerText} style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <Link to="/donation" className={styles.sponsorLink}>
+              チップを贈る
+            </Link>
+          </p>
+        </div>
       </footer>
     </div>
   );
