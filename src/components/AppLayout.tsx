@@ -60,7 +60,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             ・旧暦・六曜データはkoyomi8.com（新暦と旧暦変換）のデータを参照しています。
           </p>
           <p className={styles.footerText}>
-            ・本アプリでは、不定時法計算などに、ブラウザの位置情報（Geolocation）を要求します。位置情報のを取得できない場合は、東京をデフォルトとして計算します。個人を特定する情報は取得・保存しておりません。
+            ・本アプリでは、不定時法計算などに、ブラウザの位置情報（Geolocation）を要求します。位置情報を取得できない場合は、東京をデフォルトとして計算します。個人を特定する情報は取得・保存しておりません。
           </p>
           <p className={styles.footerText} style={{ textAlign: 'center', marginTop: '1rem' }}>
             <Link to="/donation" className={styles.sponsorLink}>
