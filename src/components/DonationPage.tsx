@@ -8,6 +8,8 @@
 import { Link } from 'react-router-dom';
 import styles from './DonationPage.module.css';
 
+const BUYMEACOFFEE_URL = 'https://buymeacoffee.com/mnrj.vv.w';
+
 export function DonationPage() {
   return (
     <div className={styles.page}>
@@ -17,19 +19,41 @@ export function DonationPage() {
         </Link>
         <h1 className={styles.title}>チップを贈る</h1>
         <p className={styles.lead}>
-          もし本サービスを気に入っていただけましたら、今後の維持、保守、拡張の為にお気持ちいただけると励みになります。また、ご意見ご感想ご要望などもお待ちしております
+        本サービスの継続と改善のため、無理のない範囲でご支援いただけますと嬉しいです。
+        ご意見・ご感想・ご要望もお待ちしております。
         </p>
 
         <section className={styles.section}>
-          <p className={styles.paypayInfo}>
-            PayPay ID: <strong>mnrj_vv_w</strong>
-          </p>
+          <div className={styles.paypayRow}>
+            <img
+              src={`${import.meta.env.BASE_URL}images/paypay-logo.png`}
+              alt="PayPay"
+              className={styles.paypayLogo}
+              width={48}
+              height={48}
+            />
+            <p className={styles.paypayInfo}>
+              PayPay ID: <strong>mnrj_vv_w</strong>
+            </p>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <a
+            href={BUYMEACOFFEE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.bmcButton}
+          >
+            <span className={styles.bmcButtonIcon} aria-hidden>☕</span>
+            <span className={styles.bmcButtonText}>Buy me a coffee</span>
+          </a>
         </section>
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>お問い合わせ</h2>
           <p className={styles.contactInfo}>
-            mnrj.vv.w(アットマーク)gmail.com
+            mnrj.vv.w@gmail.com
           </p>
         </section>
 

@@ -66,6 +66,19 @@
   letter-spacing: 0.05em;
 }
 
+.paypayRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.paypayLogo {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+}
+
 .paypayInfo,
 .contactInfo {
   font-size: 0.9375rem;
@@ -74,10 +87,50 @@
   color: #2c1810;
 }
 
-
 .paypayInfo strong {
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+/* Buy Me a Coffee 風リンクボタン */
+.bmcButton {
+  display: inline-flex;
+  align-items: center;
+  min-width: 210px;
+  height: 60px;
+  padding: 0 24px;
+  background-color: #FFDD00;
+  color: #000000;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 12px;
+  border: 2px solid #000000;
+  box-sizing: border-box;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.bmcButton:hover,
+.bmcButton:focus {
+  text-decoration: none;
+  color: #000000;
+  filter: brightness(0.98);
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.bmcButton:active {
+  transform: scale(0.98);
+}
+
+.bmcButtonIcon {
+  font-size: 1.75rem;
+  line-height: 1;
+  margin-right: 8px;
+}
+
+.bmcButtonText {
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
