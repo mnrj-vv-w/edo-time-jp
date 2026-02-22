@@ -1,0 +1,39 @@
+.container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.value {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 400;
+}
+
+.noLocation {
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.placeName {
+  font-size: 0.875rem;
+  color: #333;
+  margin-top: 0.25rem;
+}
+
+.credit {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 0.5rem;
+}
+
+.credit a {
+  color: #666;
+}

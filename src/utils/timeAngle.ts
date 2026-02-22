@@ -38,33 +38,21 @@ export function timeToAngle(time: Date, noon: Date): number {
 }
 
 /**
- * 日の出・日の入りから明け六つ・暮れ六つの角度を計算する
- * Calculate angles for ake-mutsu and kure-mutsu from sunrise and sunset
- * 
- * 日の出30分前（明け六つ）と日の入り30分後（暮れ六つ）の時刻から角度を計算する。
- * 
- * Calculates angles from times 30 minutes before sunrise (ake-mutsu) and 30 minutes after sunset (kure-mutsu).
- * 
- * @param sunrise - 日の出の時刻 / Sunrise time
- * @param sunset - 日の入りの時刻 / Sunset time
+ * 明け六つ・暮れ六つの時刻から円盤用の角度を計算する
+ * Calculate angles for ake-mutsu and kure-mutsu from their times
+ *
+ * @param akeMutsu - 明け六つの時刻 / Ake-mutsu time
+ * @param kureMutsu - 暮れ六つの時刻 / Kure-mutsu time
  * @param noon - 正午の時刻（同じ日の12時）/ Noon time (12:00 of the same day)
  * @returns 明け六つ・暮れ六つの角度 / Angles for ake-mutsu and kure-mutsu
  */
 export function calculateAkeKureAngles(
-  sunrise: Date,
-  sunset: Date,
+  akeMutsu: Date,
+  kureMutsu: Date,
   noon: Date
 ): { akeMutsuAngle: number; kureMutsuAngle: number } {
-  // 明け六つ（日の出30分前）
-  // Ake-mutsu (30 minutes before sunrise)
-  const akeMutsu = new Date(sunrise.getTime() - 30 * 60 * 1000);
   const akeMutsuAngle = timeToAngle(akeMutsu, noon);
-  
-  // 暮れ六つ（日の入り30分後）
-  // Kure-mutsu (30 minutes after sunset)
-  const kureMutsu = new Date(sunset.getTime() + 30 * 60 * 1000);
   const kureMutsuAngle = timeToAngle(kureMutsu, noon);
-  
   return { akeMutsuAngle, kureMutsuAngle };
 }
 

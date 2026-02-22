@@ -37,7 +37,12 @@ interface TemporalTimeCircleProps {
  * @returns 円形時計の表示要素 / Circular clock display element
  */
 export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
-  const { temporalTime, akeMutsu, kureMutsu, currentTime, sunrise, sunset, noonForCircle } = data;
+  const { temporalTime, akeMutsu, kureMutsu, currentTime, sunrise, sunset, noonForCircle, solarNoon, location: loc } = data;
+
+  const solarNoonText =
+    loc?.tz != null
+      ? solarNoon.toLocaleString('ja-JP', { timeZone: loc.tz, hour: '2-digit', minute: '2-digit', hour12: false })
+      : `${String(solarNoon.getHours()).padStart(2, '0')}:${String(solarNoon.getMinutes()).padStart(2, '0')}`;
 
   // セグメントのレイアウト（昼・夜の扇形の角度）は日出・日落の「時刻」が変わるときだけ再計算する
   // 正午はコアが返す noonForCircle を使い、地点・タイムゾーンが変わっても角度が一貫するようにする
@@ -46,7 +51,7 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
     const centerX = 200;
     const centerY = 200;
 
-    const { akeMutsuAngle, kureMutsuAngle } = calculateAkeKureAngles(sunrise, sunset, noonForCircle);
+    const { akeMutsuAngle, kureMutsuAngle } = calculateAkeKureAngles(akeMutsu, kureMutsu, noonForCircle);
     log('TemporalTimeCircle:segmentLayout', {
       sunrise: sunrise.getTime(),
       sunriseISO: sunrise.toISOString(),
@@ -486,6 +491,13 @@ export function TemporalTimeCircle({ data }: TemporalTimeCircleProps) {
           </g>
         </svg>
       </div>
+      <p
+        className={styles.solarNoonNote}
+        title="太陽は毎日ぴったり12時に真上に来るわけではありません"
+      >
+        今日の真太陽南中：{solarNoonText}
+        <span className={styles.solarNoonSub}>（昼の中心は真太陽南中に基づきます）</span>
+      </p>
       {/* <div className={styles.info}>
         <p className={styles.currentPeriod}>
           現在: <span className={styles.periodText}>{circleData.isDay ? '昼' : '夜'}</span> {kokuToKanji(temporalTime.koku)}刻（{getJuniShinFromKoku(temporalTime.period, temporalTime.koku)}の刻）

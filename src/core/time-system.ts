@@ -44,31 +44,20 @@ export function getKureMutsu(sunset: Date): Date {
 /**
  * 不定時法の完全な情報を返す
  * Get complete temporal time system information
- * 
- * 日の出30分前（明け六つ）から日の入り30分後（暮れ六つ）までを昼6刻、
- * それ以外を夜6刻として分割し、現在時刻がどの刻に属するかを判定する。
- * 
- * Divides the period from 30 minutes before sunrise (ake-mutsu) to 30 minutes after sunset (kure-mutsu)
- * into 6 day koku, and the remaining period into 6 night koku, then determines which koku the current time belongs to.
- * 
- * @param sunrise - 日の出の時刻 / Sunrise time
- * @param sunset - 日の入りの時刻 / Sunset time
+ *
+ * 明け六つから暮れ六つまでを昼6刻、それ以外を夜6刻として分割し、現在時刻がどの刻に属するかを判定する。
+ * 明け六つ・暮れ六つは呼び出し側で計算（例: 伏角7°21′40″による夜明・日暮）して渡す。
+ *
+ * @param akeMutsu - 明け六つ（昼の開始時刻）/ Ake-mutsu (day start)
+ * @param kureMutsu - 暮れ六つ（昼の終了時刻）/ Kure-mutsu (day end)
  * @param now - 現在時刻 / Current time
  * @returns 不定時法の意味構造 / Temporal time system meaning structure
  */
 export function getTemporalTime(
-  sunrise: Date,
-  sunset: Date,
+  akeMutsu: Date,
+  kureMutsu: Date,
   now: Date
 ): TemporalTime {
-  // 明け六つ（日の出30分前）
-  // Ake-mutsu (30 minutes before sunrise)
-  const akeMutsu = getAkeMutsu(sunrise);
-  
-  // 暮れ六つ（日の入り30分後）
-  // Kure-mutsu (30 minutes after sunset)
-  const kureMutsu = getKureMutsu(sunset);
-  
   // 昼の時間帯（明け六つから暮れ六つまで）
   // Daytime period (from ake-mutsu to kure-mutsu)
   const dayDuration = kureMutsu.getTime() - akeMutsu.getTime();

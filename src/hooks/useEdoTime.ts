@@ -13,7 +13,7 @@
  * so update reason is honestly expressed as "display consistency" and "granularity to track koku changes".
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { calculateEdoTime } from '../core';
 import { DEFAULT_LOCATION } from '../core/astronomy/constants';
 import type { EdoTimeData, Location } from '../core/types';
@@ -58,11 +58,11 @@ export function useEdoTime(location?: Location): EdoTimeData {
       return;
     }
 
-    /**
-     * 位置情報を取得する
-     * Fetch location information
-     */
-    const fetchLocation = () => {
+    const GEOLOCATION_TIMEOUT_MS = 15000;
+    const MAX_RETRIES = 1;
+    const RETRY_DELAY_MS = 3000;
+
+    const fetchLocation = (retryCount = 0) => {
       if (!navigator?.geolocation) {
         log('useEdoTime:loc', {
           source: 'fallback',
@@ -81,20 +81,46 @@ export function useEdoTime(location?: Location): EdoTimeData {
           log('useEdoTime:loc', { source: 'geolocation', loc: newLoc });
           setLoc(newLoc);
         },
-        () => {
+        (error: GeolocationPositionError) => {
+          const errorReason =
+            error.code === 1
+              ? 'PERMISSION_DENIED'
+              : error.code === 2
+                ? 'POSITION_UNAVAILABLE'
+                : error.code === 3
+                  ? 'TIMEOUT'
+                  : 'UNKNOWN';
           log('useEdoTime:loc', {
             source: 'fallback',
             reason: 'geolocation_error',
+            errorCode: error.code,
+            errorReason,
+            errorMessage: error.message,
+            retryCount,
             loc: { lat: DEFAULT_LOCATION.lat, lon: DEFAULT_LOCATION.lon, tz: DEFAULT_LOCATION.tz },
           });
-          setLoc(DEFAULT_LOCATION);
+          if (retryCount < MAX_RETRIES) {
+            setTimeout(() => fetchLocation(retryCount + 1), RETRY_DELAY_MS);
+          } else {
+            setLoc(DEFAULT_LOCATION);
+          }
         },
-        { enableHighAccuracy: true, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: GEOLOCATION_TIMEOUT_MS }
       );
     };
 
     fetchLocation();
   }, [location]);
+
+  // 現在位置が変わったときに即座に描画を更新（円盤・赤線を新しい loc で再計算）
+  const isFirstLocRef = useRef(true);
+  useEffect(() => {
+    if (isFirstLocRef.current) {
+      isFirstLocRef.current = false;
+      return;
+    }
+    setData(calculateEdoTime(new Date(), loc));
+  }, [loc]);
 
   // 1分ごとにデータを更新（初回は即時実行しない＝初回描画の data を上書きしない）
   // Update data every 1 minute (do NOT run setData immediately on mount - avoids overwriting correct first paint)

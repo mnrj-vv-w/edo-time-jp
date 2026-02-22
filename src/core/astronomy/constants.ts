@@ -43,3 +43,10 @@ export const ASTRONOMICAL_CONSTANTS = {
   ATMOSPHERIC_REFRACTION: 0.583,
 } as const;
 
+/**
+ * 常用薄明の伏角（寛政暦による夜明・日暮の定義）
+ * Civil twilight depression angle (Kansei calendar definition for dawn/dusk)
+ * 7°21′40″ = 太陽中心が地平線下この角度にあるときを夜明の始まり・日暮の終わりとする。
+ */
+export const CIVIL_TWILIGHT_DEPRESSION_DEG = 7 + 21 / 60 + 40 / 3600;
+

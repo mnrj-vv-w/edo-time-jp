@@ -19,6 +19,7 @@ import { Sekki72 } from './components/Sekki72';
 import { TimeSystem } from './components/TimeSystem';
 import { Rokuyo } from './components/Rokuyo';
 import { LunarCalendar } from './components/LunarCalendar';
+import { CurrentLocationDisplay } from './components/CurrentLocationDisplay';
 import { useEdoTime } from './hooks/useEdoTime';
 
 /** トップページ（江戸ごよみメイン表示） */
@@ -33,6 +34,7 @@ function TopPage() {
       <TimeSystem data={data} />
       <Rokuyo data={data} />
       <LunarCalendar data={data} />
+      <CurrentLocationDisplay data={data} />
     </AppLayout>
   );
 }
