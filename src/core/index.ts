@@ -62,22 +62,28 @@ export function calculateEdoTime(
   const { sunrise, sunset } = getSunriseSunset(baseDate, loc);
 
   // 明け六つ・暮れ六つを伏角7°21′40″（寛政暦の夜明・日暮）で計算
-  // Calculate ake-mutsu and kure-mutsu by depression angle 7°21′40″ (Kansei calendar dawn/dusk)
   const { dawn, dusk } = getDawnDusk(baseDate, loc);
   const akeMutsu = dawn;
   const kureMutsu = dusk;
 
+  // 現在が明け六つより前（深夜）のときは、夜の区間を「前日暮れ六つ〜今日明け六つ」にするため前日の暮れ六つを取得
+  const prevKureMutsu =
+    baseDate.getTime() < akeMutsu.getTime()
+      ? (() => {
+          const prevDate = new Date(baseDate.getTime() - 24 * 60 * 60 * 1000);
+          const { dusk: prevDusk } = getDawnDusk(prevDate, loc);
+          return prevDusk;
+        })()
+      : undefined;
+
   // 二十四節気を判定
-  // Determine solar term (24 sekki)
   const solarTerm = getSolarTerm(solarLongitude);
 
   // 七十二候を判定
-  // Determine 72 micro-seasons
   const sekki72 = getSekki72(solarLongitude);
 
   // 不定時法を計算（明け六つ・暮れ六つを境界に昼6刻・夜6刻）
-  // Calculate temporal time system (6 day koku, 6 night koku bounded by ake-mutsu, kure-mutsu)
-  const temporalTime = getTemporalTime(akeMutsu, kureMutsu, baseDate);
+  const temporalTime = getTemporalTime(akeMutsu, kureMutsu, baseDate, prevKureMutsu);
 
   // 円盤用正午（地点のタイムゾーンでの暦日で 12:00。現在地で統一）
   // Noon for circle (12:00 on calendar day in location TZ; unified with current location)

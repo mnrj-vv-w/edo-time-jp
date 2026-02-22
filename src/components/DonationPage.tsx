@@ -76,7 +76,7 @@ export function DonationPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>お問い合わせ</h2>
+          <h2 className={styles.sectionTitle}>バグ報告・お問い合わせ先</h2>
           <p className={styles.contactInfo}>
             mnrj.vv.w@gmail.com
           </p>

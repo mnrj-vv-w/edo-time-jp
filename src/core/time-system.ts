@@ -46,103 +46,84 @@ export function getKureMutsu(sunset: Date): Date {
  * Get complete temporal time system information
  *
  * 明け六つから暮れ六つまでを昼6刻、それ以外を夜6刻として分割し、現在時刻がどの刻に属するかを判定する。
- * 明け六つ・暮れ六つは呼び出し側で計算（例: 伏角7°21′40″による夜明・日暮）して渡す。
+ * 現在時刻が明け六つより前（深夜）のときは、前日の暮れ六つを渡すと正しい夜の区間で刻を計算する。
  *
  * @param akeMutsu - 明け六つ（昼の開始時刻）/ Ake-mutsu (day start)
  * @param kureMutsu - 暮れ六つ（昼の終了時刻）/ Kure-mutsu (day end)
  * @param now - 現在時刻 / Current time
+ * @param prevKureMutsu - 前日の暮れ六つ（now が明け六つより前のときのみ使用）/ Previous day's kure-mutsu (used only when now is before ake-mutsu)
  * @returns 不定時法の意味構造 / Temporal time system meaning structure
  */
 export function getTemporalTime(
   akeMutsu: Date,
   kureMutsu: Date,
-  now: Date
+  now: Date,
+  prevKureMutsu?: Date
 ): TemporalTime {
-  // 昼の時間帯（明け六つから暮れ六つまで）
-  // Daytime period (from ake-mutsu to kure-mutsu)
-  const dayDuration = kureMutsu.getTime() - akeMutsu.getTime();
-  /** 昼の一刻の長さ（ミリ秒）/ Length of one day koku (milliseconds) */
-  const dayKokuDuration = dayDuration / 6;
-  
-  // 夜の時間帯（暮れ六つから翌日の明け六つまで）
-  // Nighttime period (from kure-mutsu to next day's ake-mutsu)
-  const nightDuration = (24 * 60 * 60 * 1000) - dayDuration;
-  /** 夜の一刻の長さ（ミリ秒）/ Length of one night koku (milliseconds) */
-  const nightKokuDuration = nightDuration / 6;
-  
-  // 現在時刻が昼か夜かを判定
-  // Determine if current time is day or night
   const nowTime = now.getTime();
   const akeMutsuTime = akeMutsu.getTime();
   const kureMutsuTime = kureMutsu.getTime();
-  
-  // 日をまたぐ場合の処理
-  // Handle cases where time crosses midnight
-  let normalizedNowTime = nowTime;
-  if (normalizedNowTime < akeMutsuTime) {
-    // 前日の夜の時間帯
-    // Previous day's nighttime period
-    normalizedNowTime += 24 * 60 * 60 * 1000;
-  }
-  
+
+  // 昼の時間帯（明け六つから暮れ六つまで）
+  const dayDuration = kureMutsu.getTime() - akeMutsu.getTime();
+  const dayKokuDuration = dayDuration / 6;
+
   /** 昼か夜か / Day or night */
   let period: "day" | "night";
-  /** 刻（1-6）/ Koku (1-6) */
   let koku: 1 | 2 | 3 | 4 | 5 | 6;
-  /** 刻の開始時刻 / Koku start time */
   let start: Date;
-  /** 刻の終了時刻 / Koku end time */
   let end: Date;
-  
-  if (normalizedNowTime >= akeMutsuTime && normalizedNowTime < kureMutsuTime) {
+
+  if (nowTime >= akeMutsuTime && nowTime < kureMutsuTime) {
     // 昼の時間帯
-    // Daytime period
     period = "day";
-    /** 明け六つからの経過時間（ミリ秒）/ Elapsed time from ake-mutsu (milliseconds) */
-    const elapsed = normalizedNowTime - akeMutsuTime;
+    const elapsed = nowTime - akeMutsuTime;
     koku = (Math.floor(elapsed / dayKokuDuration) + 1) as 1 | 2 | 3 | 4 | 5 | 6;
     if (koku > 6) koku = 6;
-    
-    /** 刻の開始時刻（ミリ秒）/ Koku start time (milliseconds) */
     const kokuStart = akeMutsuTime + (koku - 1) * dayKokuDuration;
-    /** 刻の終了時刻（ミリ秒）/ Koku end time (milliseconds) */
     const kokuEnd = akeMutsuTime + koku * dayKokuDuration;
-    
     start = new Date(kokuStart);
     end = new Date(kokuEnd);
-  } else {
-    // 夜の時間帯
-    // Nighttime period
-    period = "night";
-    
-    // 暮れ六つからの経過時間
-    // Elapsed time from kure-mutsu
-    let elapsed: number;
-    if (normalizedNowTime >= kureMutsuTime) {
-      elapsed = normalizedNowTime - kureMutsuTime;
-    } else {
-      // 前日の夜の時間帯
-      // Previous day's nighttime period
-      elapsed = (normalizedNowTime - akeMutsuTime) + (24 * 60 * 60 * 1000 - dayDuration);
-    }
-    
+    return { period, koku, start, end };
+  }
+
+  // 夜の時間帯
+  period = "night";
+
+  // 現在が明け六つより前で、前日の暮れ六つが渡されている → 夜は「前日暮れ六つ〜今日明け六つ」
+  if (nowTime < akeMutsuTime && prevKureMutsu != null) {
+    const prevKureMutsuTime = prevKureMutsu.getTime();
+    const nightDuration = akeMutsuTime - prevKureMutsuTime;
+    const nightKokuDuration = nightDuration / 6;
+    const elapsed = nowTime - prevKureMutsuTime;
     koku = (Math.floor(elapsed / nightKokuDuration) + 1) as 1 | 2 | 3 | 4 | 5 | 6;
     if (koku > 6) koku = 6;
-    
-    /** 刻の開始時刻（ミリ秒）/ Koku start time (milliseconds) */
-    const kokuStart = kureMutsuTime + (koku - 1) * nightKokuDuration;
-    /** 刻の終了時刻（ミリ秒）/ Koku end time (milliseconds) */
-    const kokuEnd = kureMutsuTime + koku * nightKokuDuration;
-    
+    const kokuStart = prevKureMutsuTime + (koku - 1) * nightKokuDuration;
+    const kokuEnd = prevKureMutsuTime + koku * nightKokuDuration;
     start = new Date(kokuStart);
     end = new Date(kokuEnd);
+    return { period, koku, start, end };
   }
-  
-  return {
-    period,
-    koku,
-    start,
-    end,
-  };
+
+  // 通常の夜（今日の暮れ六つ〜翌日明け六つ）
+  const nightDuration = 24 * 60 * 60 * 1000 - dayDuration;
+  const nightKokuDuration = nightDuration / 6;
+  let elapsed: number;
+  if (nowTime >= kureMutsuTime) {
+    elapsed = nowTime - kureMutsuTime;
+  } else {
+    // 前日の夜（+24h してから経過を計算）
+    const normalizedNowTime = nowTime + 24 * 60 * 60 * 1000;
+    elapsed = (normalizedNowTime - akeMutsuTime) + (24 * 60 * 60 * 1000 - dayDuration);
+  }
+
+  koku = (Math.floor(elapsed / nightKokuDuration) + 1) as 1 | 2 | 3 | 4 | 5 | 6;
+  if (koku > 6) koku = 6;
+  const kokuStart = kureMutsuTime + (koku - 1) * nightKokuDuration;
+  const kokuEnd = kureMutsuTime + koku * nightKokuDuration;
+  start = new Date(kokuStart);
+  end = new Date(kokuEnd);
+
+  return { period, koku, start, end };
 }
 
