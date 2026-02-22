@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import styles from './DonationPage.module.css';
 
 const BUYMEACOFFEE_URL = 'https://buymeacoffee.com/mnrj.vv.w';
+const PAYPAL_PAYMENT_URL = 'https://www.paypal.com/ncp/payment/8YGGFHNABFGG2';
 
 export function DonationPage() {
   return (
@@ -35,6 +36,30 @@ export function DonationPage() {
             <p className={styles.paypayInfo}>
               PayPay ID: <strong>mnrj_vv_w</strong>
             </p>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>PayPal</h2>
+          <div className={styles.paypalBlock}>
+            <img
+              src={`${import.meta.env.BASE_URL}images/paypal-qrcode.png`}
+              alt="PayPal 支払い用QRコード"
+              className={styles.paypalQr}
+              width={160}
+              height={160}
+            />
+            <div className={styles.paypalLinkWrap}>
+              <a
+                href={PAYPAL_PAYMENT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.paypalLink}
+              >
+                PayPalで支払う
+              </a>
+              <p className={styles.paypalNote}>QRコードを読み取っても支払いページへ移動できます</p>
+            </div>
           </div>
         </section>
 
