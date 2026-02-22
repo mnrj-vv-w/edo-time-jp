@@ -92,6 +92,54 @@
   letter-spacing: 0.02em;
 }
 
+/* PayPal */
+.paypalBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.paypalQr {
+  flex-shrink: 0;
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.paypalLinkWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.paypalLink {
+  display: inline-block;
+  color: #003087;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.paypalLink:hover,
+.paypalLink:focus {
+  text-decoration: underline;
+  color: #001c64;
+}
+
+.paypalLink:focus {
+  outline: 2px solid #003087;
+  outline-offset: 2px;
+}
+
+.paypalNote {
+  font-size: 0.8125rem;
+  color: #5a4a3a;
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* Buy Me a Coffee 風リンクボタン */
 .bmcButton {
   display: inline-flex;
