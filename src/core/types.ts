@@ -150,5 +150,14 @@ export interface EdoTimeData {
    * Computed by core on the same calendar day as sunrise/sunset so the circle stays consistent when location/TZ changes.
    */
   noonForCircle: Date;
+
+  /**
+   * 真太陽南中時刻（太陽が子午線を通過する時刻）。説明表示用。
+   * True solar noon (time of solar transit). For UI explanation only.
+   */
+  solarNoon: Date;
+
+  /** 計算に使用した位置（緯度・経度・タイムゾーン）/ Location used for calculation (lat, lon, tz) */
+  location?: Location;
 }
 

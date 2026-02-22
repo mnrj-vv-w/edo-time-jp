@@ -13,10 +13,11 @@
 import type { EdoTimeData, Location } from './types';
 import { DEFAULT_LOCATION } from './astronomy/constants';
 import { getSolarLongitude } from './astronomy/solarLongitude';
-import { getSunriseSunset } from './astronomy/sunriseSunset';
+import { getSunriseSunset, getDawnDusk } from './astronomy/sunriseSunset';
+import { getSolarNoon } from './astronomy/solarNoon';
 import { getSolarTerm } from './solar-terms';
 import { getSekki72 } from './sekki-72';
-import { getTemporalTime, getAkeMutsu, getKureMutsu } from './time-system';
+import { getTemporalTime } from './time-system';
 import { getRokuyo } from './rokuyo';
 import { getLunarDate, getMoonAge } from './lunar-calendar';
 import {
@@ -59,29 +60,31 @@ export function calculateEdoTime(
   // 日の出・日の入りを計算
   // Calculate sunrise and sunset
   const { sunrise, sunset } = getSunriseSunset(baseDate, loc);
-  
+
+  // 明け六つ・暮れ六つを伏角7°21′40″（寛政暦の夜明・日暮）で計算
+  // Calculate ake-mutsu and kure-mutsu by depression angle 7°21′40″ (Kansei calendar dawn/dusk)
+  const { dawn, dusk } = getDawnDusk(baseDate, loc);
+  const akeMutsu = dawn;
+  const kureMutsu = dusk;
+
   // 二十四節気を判定
   // Determine solar term (24 sekki)
   const solarTerm = getSolarTerm(solarLongitude);
-  
+
   // 七十二候を判定
   // Determine 72 micro-seasons
   const sekki72 = getSekki72(solarLongitude);
-  
-  // 不定時法を計算
-  // Calculate temporal time system
-  const temporalTime = getTemporalTime(sunrise, sunset, baseDate);
-  
-  // 明け六つ・暮れ六つを計算
-  // Calculate ake-mutsu and kure-mutsu
-  const akeMutsu = getAkeMutsu(sunrise);
-  const kureMutsu = getKureMutsu(sunset);
+
+  // 不定時法を計算（明け六つ・暮れ六つを境界に昼6刻・夜6刻）
+  // Calculate temporal time system (6 day koku, 6 night koku bounded by ake-mutsu, kure-mutsu)
+  const temporalTime = getTemporalTime(akeMutsu, kureMutsu, baseDate);
 
   // 円盤用正午（地点のタイムゾーンでの暦日で 12:00。現在地で統一）
   // Noon for circle (12:00 on calendar day in location TZ; unified with current location)
   const calendarDate = getCalendarDateInTimeZone(baseDate, loc.tz);
   const { year, month, day } = calendarDate;
   const noonForCircle = getNoonInTimeZone(year, month, day, loc.tz);
+  const solarNoon = getSolarNoon(year, month, day, loc);
 
   log('core:calculateEdoTime', {
     baseDate: baseDate.toISOString(),
@@ -123,6 +126,8 @@ export function calculateEdoTime(
     sunrise,
     sunset,
     noonForCircle,
+    solarNoon,
+    location: loc,
   };
 }
 

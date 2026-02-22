@@ -48,6 +48,20 @@
   margin: 0.25rem 0;
 }
 
+.solarNoonNote {
+  font-size: 0.75rem;
+  color: #666;
+  margin: 0.5rem 0 0;
+  line-height: 1.4;
+}
+
+.solarNoonSub {
+  display: block;
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 0.2rem;
+}
+
 @media (max-width: 768px) {
   .container {
     margin: 1rem 0;

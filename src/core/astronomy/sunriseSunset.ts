@@ -17,6 +17,8 @@ import type { Location } from '../types';
 import { getCalendarDateInTimeZone, getNoonInTimeZone } from '../../utils/timezone';
 import { log } from '../../utils/debugLog';
 import { getSolarLongitude } from './solarLongitude';
+import { getSolarNoon } from './solarNoon';
+import { CIVIL_TWILIGHT_DEPRESSION_DEG } from './constants';
 
 /**
  * 日の出・日の入りの時刻を計算する
@@ -33,52 +35,29 @@ import { getSolarLongitude } from './solarLongitude';
  * @returns 日の出・日の入りの時刻（ローカルタイムゾーン）/ Sunrise and sunset times (local timezone)
  */
 export function getSunriseSunset(date: Date, location: Location): { sunrise: Date; sunset: Date } {
-  // その日の正午を「地点のタイムゾーン」での暦日で作成（現在地で統一）
-  // Use noon on that day in the location's timezone (unified with current location)
   const { year, month, day } = getCalendarDateInTimeZone(date, location.tz);
-  const noon = getNoonInTimeZone(year, month, day, location.tz);
-  
-  // 太陽黄経を正確に計算（既存の関数を使用）
-  // Calculate solar longitude accurately (using existing function)
-  const solarLongitude = getSolarLongitude(noon);
-  
-  // 黄道傾斜角（度）
-  // Obliquity of the ecliptic (degrees)
-  const daysSinceJ2000 = (noon.getTime() - new Date('2000-01-01T12:00:00Z').getTime()) / (1000 * 60 * 60 * 24);
+  const clockNoon = getNoonInTimeZone(year, month, day, location.tz);
+  const solarNoon = getSolarNoon(year, month, day, location);
+
+  // 黄経・赤緯・時角は clockNoon 基準のまま（変更最小）
+  const solarLongitude = getSolarLongitude(clockNoon);
+  const daysSinceJ2000 = (clockNoon.getTime() - new Date('2000-01-01T12:00:00Z').getTime()) / (1000 * 60 * 60 * 24);
   const obliquity = 23.4393 - 0.0000004 * daysSinceJ2000;
-  
-  // 太陽の赤緯（度）- 太陽黄経から正確に計算
-  // Solar declination (degrees) - calculated accurately from solar longitude
   const L_rad = (solarLongitude * Math.PI) / 180;
   const obliquity_rad = (obliquity * Math.PI) / 180;
   const declination = Math.asin(Math.sin(L_rad) * Math.sin(obliquity_rad)) * (180 / Math.PI);
-  
-  // 日の出・日の入りの時角（度）
-  // Hour angle for sunrise/sunset (degrees)
+
   const latRad = (location.lat * Math.PI) / 180;
   const decRad = (declination * Math.PI) / 180;
-  
-  // cos(H) = -tan(φ) * tan(δ)
-  // Formula: cos(H) = -tan(φ) * tan(δ)
   const cosH = -Math.tan(latRad) * Math.tan(decRad);
-  
-  // 時角が計算可能な場合
-  // If hour angle is calculable
+
   if (Math.abs(cosH) <= 1) {
-    /** 時角（度）/ Hour angle (degrees) */
     const hourAngle = Math.acos(cosH) * (180 / Math.PI);
-    
-    // 日の出・日の入りの時刻（ローカル時間）
-    // Sunrise/sunset times (local time)
-    // 正午から時角分前後
-    // Before/after noon by hour angle
-    /** 日の出のオフセット（時間）/ Sunrise offset (hours) */
     const sunriseOffset = -hourAngle / 15;
-    /** 日の入りのオフセット（時間）/ Sunset offset (hours) */
     const sunsetOffset = hourAngle / 15;
-    
-    const sunrise = new Date(noon.getTime() + sunriseOffset * 60 * 60 * 1000);
-    const sunset = new Date(noon.getTime() + sunsetOffset * 60 * 60 * 1000);
+
+    const sunrise = new Date(solarNoon.getTime() + sunriseOffset * 60 * 60 * 1000);
+    const sunset = new Date(solarNoon.getTime() + sunsetOffset * 60 * 60 * 1000);
     log('sunriseSunset:getSunriseSunset', {
       dateMs: date.getTime(),
       dateISO: date.toISOString(),
@@ -91,11 +70,8 @@ export function getSunriseSunset(date: Date, location: Location): { sunrise: Dat
     return { sunrise, sunset };
   } else {
     // 極夜または白夜の場合
-    // Polar night or midnight sun case
-    // 簡易処理：正午の前後6時間を日の出・日の入りとする
-    // Simplified handling: set sunrise/sunset to 6 hours before/after noon
-    const sunrise = new Date(noon.getTime() - 6 * 60 * 60 * 1000);
-    const sunset = new Date(noon.getTime() + 6 * 60 * 60 * 1000);
+    const sunrise = new Date(solarNoon.getTime() - 6 * 60 * 60 * 1000);
+    const sunset = new Date(solarNoon.getTime() + 6 * 60 * 60 * 1000);
     log('sunriseSunset:getSunriseSunset', {
       dateMs: date.getTime(),
       dateISO: date.toISOString(),
@@ -108,5 +84,63 @@ export function getSunriseSunset(date: Date, location: Location): { sunrise: Dat
     });
     return { sunrise, sunset };
   }
+}
+
+/**
+ * 夜明の始まり・日暮の終わり（明け六つ・暮れ六つ）の時刻を計算する
+ * 寛政暦の定義: 太陽の伏角が 7°21′40″ となる時刻（太陽中心の高度が −7°21′40″）。
+ *
+ * @param date - 計算対象の日（そのタイムゾーンの暦日として扱う）
+ * @param location - 位置情報
+ * @returns dawn = 夜明の始まり（明け六つ）, dusk = 日暮の終わり（暮れ六つ）
+ */
+export function getDawnDusk(date: Date, location: Location): { dawn: Date; dusk: Date } {
+  const { year, month, day } = getCalendarDateInTimeZone(date, location.tz);
+  const clockNoon = getNoonInTimeZone(year, month, day, location.tz);
+  const solarNoon = getSolarNoon(year, month, day, location);
+
+  const solarLongitude = getSolarLongitude(clockNoon);
+  const daysSinceJ2000 = (clockNoon.getTime() - new Date('2000-01-01T12:00:00Z').getTime()) / (1000 * 60 * 60 * 24);
+  const obliquity = 23.4393 - 0.0000004 * daysSinceJ2000;
+  const L_rad = (solarLongitude * Math.PI) / 180;
+  const obliquity_rad = (obliquity * Math.PI) / 180;
+  const declination = Math.asin(Math.sin(L_rad) * Math.sin(obliquity_rad)) * (180 / Math.PI);
+
+  const sunAltitudeDeg = -CIVIL_TWILIGHT_DEPRESSION_DEG;
+  const hRad = (sunAltitudeDeg * Math.PI) / 180;
+  const latRad = (location.lat * Math.PI) / 180;
+  const decRad = (declination * Math.PI) / 180;
+
+  const cosH =
+    (Math.sin(hRad) - Math.sin(latRad) * Math.sin(decRad)) /
+    (Math.cos(latRad) * Math.cos(decRad));
+
+  if (Math.abs(cosH) <= 1) {
+    const hourAngle = Math.acos(cosH) * (180 / Math.PI);
+    const dawnOffset = -hourAngle / 15;
+    const duskOffset = hourAngle / 15;
+    const dawn = new Date(solarNoon.getTime() + dawnOffset * 60 * 60 * 1000);
+    const dusk = new Date(solarNoon.getTime() + duskOffset * 60 * 60 * 1000);
+    log('sunriseSunset:getDawnDusk', {
+      dateISO: date.toISOString(),
+      locationTz: location.tz,
+      dawn: dawn.getTime(),
+      dawnISO: dawn.toISOString(),
+      dusk: dusk.getTime(),
+      duskISO: dusk.toISOString(),
+    });
+    return { dawn, dusk };
+  }
+
+  const dawn = new Date(solarNoon.getTime() - 6 * 60 * 60 * 1000);
+  const dusk = new Date(solarNoon.getTime() + 6 * 60 * 60 * 1000);
+  log('sunriseSunset:getDawnDusk', {
+    dateISO: date.toISOString(),
+    locationTz: location.tz,
+    polarCase: true,
+    dawn: dawn.getTime(),
+    dusk: dusk.getTime(),
+  });
+  return { dawn, dusk };
 }
 
